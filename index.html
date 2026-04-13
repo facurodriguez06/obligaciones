@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GamiStudy - Obligaciones</title>
+    <style>
+        /* =========================================
+           VARIABLES CSS & TEMA "LEGAL PROTOCOL"
+           ========================================= */
+        :root {
+            /* Paleta Protocolo Legal (Dark Navy y Azul Interfaz) */
+            --bg-primary: #0A0F1C;    /* Fondo Navy muy oscuro */
+            --bg-secondary: #111827;  /* Contenedores Slate 900 */
+            --bg-tertiary: #1E293B;   /* Elementos interactivos Slate 800 */
+            --text-main: #F8FAFC;     /* Texto claro */
+            --accent-success: #10B981; /* Esmeralda para aciertos/cumplimiento */
+            --accent-alert: #EF4444;   /* Rojo para errores/daños/incumplimiento */
+            --accent-warning: #F59E0B; /* Ámbar para alertas/mora */
+            --accent-interactive: #3B82F6; /* Azul Interfaz (Conexiones/Nodos) */
+            
+            --font-body: 'Inter', 'Segoe UI', Roboto, sans-serif;
+            --font-tech: 'Fira Code', 'Courier New', monospace;
+            --transition-smooth: 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            font-family: var(--font-body);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* HEADER Y NAVEGACIÓN */
+        header {
+            padding: 1.5rem 2rem;
+            background-color: var(--bg-secondary);
+            border-bottom: 2px solid var(--accent-interactive);
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);
+            z-index: 10;
+        }
+
+        header h1 { font-size: 1.8rem; letter-spacing: 1px; margin-bottom: 1rem; }
+        header span.tech { color: var(--accent-interactive); font-family: var(--font-tech); text-shadow: 0 0 8px rgba(59, 130, 246, 0.4); }
+
+        nav { display: flex; justify-content: center; gap: 0.8rem; flex-wrap: wrap; }
+
+        .nav-btn {
+            background-color: var(--bg-tertiary);
+            color: var(--text-main);
+            border: 1px solid transparent;
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover, .nav-btn.active {
+            background-color: var(--accent-interactive);
+            color: #fff;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+            transform: translateY(-2px);
+        }
+
+        /* CONTENEDOR PRINCIPAL */
+        main {
+            flex-grow: 1;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 1100px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .module-section {
+            display: none;
+            width: 100%;
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        .module-section.active { display: flex; flex-direction: column; align-items: center; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .instructions {
+            margin-bottom: 2rem;
+            text-align: center;
+            font-size: 1.1rem;
+            color: var(--accent-interactive);
+        }
+
+        /* =========================================
+           MÓDULO 1: FLASHCARDS
+           ========================================= */
+        .scene { width: 100%; max-width: 750px; height: 380px; perspective: 1200px; margin-bottom: 2rem; }
+        .card { width: 100%; height: 100%; position: relative; transition: transform var(--transition-smooth); transform-style: preserve-3d; cursor: pointer; }
+        .card.is-flipped { transform: rotateY(180deg); }
+        
+        .card-face {
+            position: absolute; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem;
+            border-radius: 12px; background-color: var(--bg-secondary); box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            text-align: center; border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+        .card-front h2 { font-size: 1.4rem; color: var(--text-main); }
+        .card-back { transform: rotateY(180deg); gap: 1rem; }
+        .card-back p { font-size: 1.1rem; font-family: var(--font-tech); color: var(--accent-interactive); }
+        .card-back .citation { font-size: 0.8rem; color: #888; margin-top: 1rem; }
+        
+        .controls { display: flex; gap: 1rem; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .controls.show { opacity: 1; pointer-events: auto; }
+        .btn-action { padding: 0.8rem 2rem; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: transform 0.2s; }
+        .btn-action:hover { transform: scale(1.05); }
+        .btn-easy { background-color: var(--accent-success); color: #fff; }
+        .btn-hard { background-color: var(--accent-alert); color: #fff; }
+
+        /* =========================================
+           MÓDULO 2: QUIZ
+           ========================================= */
+        #quiz-container { width: 100%; max-width: 800px; background: var(--bg-secondary); padding: 2rem; border-radius: 12px; border-top: 4px solid var(--accent-interactive); }
+        .timer-bar { width: 100%; height: 10px; background: #000; border-radius: 5px; margin-bottom: 2rem; overflow: hidden; }
+        .timer-fill { height: 100%; background: var(--accent-interactive); width: 100%; transition: width 1s linear; }
+        .timer-fill.danger { background: var(--accent-alert); }
+        .question-text { font-size: 1.3rem; margin-bottom: 1.5rem; }
+        .options-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+        .option-btn { background: var(--bg-primary); border: 2px solid var(--bg-tertiary); color: var(--text-main); padding: 1rem; border-radius: 8px; cursor: pointer; text-align: left; font-size: 1.1rem; transition: all 0.2s; }
+        .option-btn:hover { border-color: var(--accent-interactive); background: rgba(59, 130, 246, 0.1); }
+        .option-btn.correct { background: var(--accent-success); color: #fff; border-color: var(--accent-success); }
+        .option-btn.wrong { background: var(--accent-alert); color: #fff; border-color: var(--accent-alert); }
+
+        /* =========================================
+           MÓDULO 3: DRAG & DROP
+           ========================================= */
+        .dd-container { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; width: 100%; }
+        .terms-col, .defs-col { display: flex; flex-direction: column; gap: 1rem; background: var(--bg-secondary); padding: 1.5rem; border-radius: 12px; }
+        .draggable-term { background: var(--bg-tertiary); padding: 1rem; border-radius: 8px; cursor: grab; font-family: var(--font-tech); font-weight: bold; border: 1px solid var(--accent-interactive); user-select: none; text-align: center; }
+        .draggable-term:active { cursor: grabbing; }
+        .drop-zone { background: var(--bg-primary); border: 2px dashed var(--bg-tertiary); padding: 1rem; min-height: 80px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.3s; }
+        .drop-zone.drag-over { border-color: var(--accent-interactive); background: rgba(59, 130, 246, 0.1); }
+        .drop-zone.matched { border-color: var(--accent-success); background: rgba(16, 185, 129, 0.1); }
+
+        /* =========================================
+           MÓDULO 4: COMPLETAR TEXTOS
+           ========================================= */
+        .fill-container { width: 100%; max-width: 800px; background: var(--bg-secondary); padding: 2rem; border-radius: 12px; font-size: 1.3rem; line-height: 2; border-left: 4px solid var(--accent-interactive); }
+        .blank-input { 
+            background: var(--bg-primary); border: none; border-bottom: 2px solid var(--accent-interactive); 
+            color: var(--accent-warning); font-family: var(--font-tech); font-size: 1.2rem; 
+            padding: 0.2rem 0.5rem; width: 160px; text-align: center; outline: none; transition: all 0.3s;
+        }
+        .blank-input:focus { border-bottom-color: var(--accent-success); background: rgba(16, 185, 129, 0.1); }
+        .blank-input.correct { border-bottom-color: var(--accent-success); color: var(--accent-success); pointer-events: none; }
+        .blank-input.wrong { border-bottom-color: var(--accent-alert); color: var(--accent-alert); animation: shake 0.4s; }
+        .check-btn { margin-top: 2rem; padding: 1rem 2rem; font-size: 1.2rem; background: var(--accent-interactive); color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; display: block; width: 100%; }
+        .check-btn:hover { background: var(--accent-success); transform: translateY(-3px); }
+
+        /* =========================================
+           MÓDULO 5: CLASIFICADOR
+           ========================================= */
+        .sorter-container { display: flex; flex-direction: column; width: 100%; max-width: 1000px; gap: 2rem; align-items: center; }
+        .item-pool { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; padding: 1.5rem; background: var(--bg-secondary); border-radius: 12px; width: 100%; min-height: 120px; border: 2px dashed var(--bg-tertiary); }
+        .sorter-bins { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; width: 100%; }
+        .bin { background: var(--bg-secondary); border-radius: 12px; padding: 1.5rem; text-align: center; min-height: 300px; display: flex; flex-direction: column; border: 2px solid transparent; transition: all 0.3s; }
+        
+        .bin-normal { border-color: var(--accent-success); } /* Verde: Happy Path / Ejecución */
+        .bin-anormal { border-color: var(--accent-alert); } /* Rojo: Compensación / Falla */
+        
+        .bin h3 { margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem; }
+        .bin-items { flex-grow: 1; display: flex; flex-direction: column; gap: 0.5rem; }
+        .sorter-item { background: var(--bg-tertiary); padding: 0.8rem; border-radius: 6px; cursor: grab; font-weight: 500; border-left: 3px solid var(--accent-interactive); }
+        .sorter-item:active { cursor: grabbing; }
+
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        .completion-msg { text-align: center; font-size: 2rem; color: var(--accent-success); margin-top: 2rem; text-shadow: 0 0 10px rgba(16, 185, 129, 0.3); }
+        
+        /* CONFETTI CANVAS */
+        #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100; }
+    </style>
+</head>
+<body>
+
+    <canvas id="confetti-canvas"></canvas>
+
+    <header>
+        <h1>GamiStudy // <span class="tech">Interfaces Jurídicas (Obligaciones)</span></h1>
+        <nav id="main-nav">
+            <button class="nav-btn active" data-target="module-flashcards">Flashcards de Nodos</button>
+            <button class="nav-btn" data-target="module-quiz">Quiz Legal</button>
+            <button class="nav-btn" data-target="module-dragdrop">Cierre de Sockets (Extinción)</button>
+            <button class="nav-btn" data-target="module-fill">Estructuras y Daños</button>
+            <button class="nav-btn" data-target="module-sorter">Efectos de Obligación</button>
+        </nav>
+    </header>
+
+    <main>
+        <!-- MÓDULO 1: FLASHCARDS -->
+        <section id="module-flashcards" class="module-section active">
+            <p class="instructions">Repaso Activo: Descubra cómo operan las transacciones y fail-safes legales.</p>
+            <div class="scene" id="flashcard-scene"></div>
+            <div class="controls" id="flashcard-controls">
+                <button class="btn-action btn-hard" id="btn-hard">Difícil (Repasar)</button>
+                <button class="btn-action btn-easy" id="btn-easy">Fácil (Dominado)</button>
+            </div>
+        </section>
+
+        <!-- MÓDULO 2: QUIZ -->
+        <section id="module-quiz" class="module-section">
+            <p class="instructions">Resolución bajo presión: Evalúe el estado de las obligaciones en 15 segundos.</p>
+            <div id="quiz-container">
+                <div class="timer-bar"><div class="timer-fill" id="quiz-timer"></div></div>
+                <div id="quiz-content"></div>
+            </div>
+        </section>
+
+        <!-- MÓDULO 3: DRAG & DROP -->
+        <section id="module-dragdrop" class="module-section">
+            <p class="instructions">Mapee cada mecanismo de extinción (cierre de conexión legal) con su definición exacta.</p>
+            <div class="dd-container">
+                <div class="terms-col" id="dd-terms"></div>
+                <div class="defs-col" id="dd-defs"></div>
+            </div>
+        </section>
+
+        <!-- MÓDULO 4: COMPLETAR TEXTOS -->
+        <section id="module-fill" class="module-section">
+            <p class="instructions">Complete las definiciones de la Responsabilidad Civil y los Elementos Estructurales.</p>
+            <div class="fill-container">
+                <div id="fill-content"></div>
+                <button class="check-btn" id="btn-check-fill">Compilar Módulos Legales</button>
+            </div>
+        </section>
+
+        <!-- MÓDULO 5: CLASIFICADOR -->
+        <section id="module-sorter" class="module-section">
+            <p class="instructions">Clasifique el impacto de la obligación: ¿Efecto Normal (Cumplimiento) o Anormal (Daños)?</p>
+            <div class="sorter-container">
+                <div class="item-pool" id="sorter-pool"></div>
+                <div class="sorter-bins">
+                    <div class="bin bin-normal" data-bin="normal">
+                        <h3 style="color: var(--accent-success);">Efectos Normales</h3>
+                        <p style="font-size:0.9rem; color:#aaa; margin-bottom:1rem;">Ejecuciones forzadas, por terceros o "Happy Path".</p>
+                        <div class="bin-items" id="bin-normal"></div>
+                    </div>
+                    <div class="bin bin-anormal" data-bin="anormal">
+                        <h3 style="color: var(--accent-alert);">Efectos Anormales</h3>
+                        <p style="font-size:0.9rem; color:#aaa; margin-bottom:1rem;">El payload muta a compensación económica.</p>
+                        <div class="bin-items" id="bin-anormal"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        /**
+         * ========================================================================
+         * MOTOR CORE: DATOS DE OBLIGACIONES (100% DE LOS APUNTES)
+         * ========================================================================
+         */
+        const StudyData = {
+            flashcards: [
+                { id: 1, front: "¿Qué es una Obligación en términos de red / ingeniería?", back: "Un vínculo jurídico (contrato de interfaz) donde un nodo activo (Acreedor) exige a un nodo pasivo (Deudor) una Prestación, con fail-safes legales si hay incumplimiento.", cite: "Definición" },
+                { id: 2, front: "¿Cuál es el problema original que resuelve la figura de 'Obligación'?", back: "Evitar el riesgo de interbloqueo o estafa ('Tolerancia a fallos'). Crea un mecanismo donde el patrimonio del deudor funciona como garantía para asegurar que el flujo económico no se detenga.", cite: "El Problema Original" },
+                { id: 3, front: "En la Responsabilidad Civil, ¿Cuáles son las 3 capas que componen el paquete del 'Daño Resarcible'?", back: "1) Daño Emergente (pérdida directa del patrimonio), 2) Lucro Cesante (dinero dejado de ganar por el daño), 3) Pérdida de Chance (frustración de una probabilidad objetiva de éxito).", cite: "Anatomía del Daño Resarcible" },
+                { id: 4, front: "¿A qué se refiere la 'Responsabilidad Objetiva'?", back: "Quien utiliza cosas riesgosas (ej. maquinaria pesada) es responsable por el daño que causen, independientemente de si tuvo culpa o no en el evento.", cite: "Tipos de Imputación" },
+                { id: 5, front: "¿Qué mecanismo de extinción opera en la 'Confusión'?", back: "Por un evento (ej. herencia), la calidad de acreedor y deudor se concentran en la misma persona. Un nodo no puede deberse a sí mismo, por lo que la conexión colapsa/se extingue.", cite: "Extinción de las Obligaciones" },
+                { id: 6, front: "¿Qué es la 'Cláusula Penal' y qué requiere para activarse?", back: "Es una multa económica preestablecida en el contrato que se activa automáticamente por cada día de Mora (retraso culpable en el cumplimiento).", cite: "Glosario" }
+            ],
+            quiz: [
+                { q: "Un vecino arregla tu puerta destrozada por ladrones mientras estás de viaje, generándote la obligación de reembolsarle. Esto es un ejemplo de la fuente:", options: ["Delito.", "Contrato.", "Voluntad Unilateral.", "Cuasicontrato (Gestión de Negocios)."], ans: 3 },
+                { q: "Si el nodo A no terminó de pintar la casa, el sistema legal permite contratar al nodo B para terminarla, cargando la factura a A. Esto es un efecto:", options: ["Anormal de Daños y Perjuicios.", "Normal de Ejecución por Tercero.", "Normal de Ejecución Forzada (vía Juez).", "Cuasidelito."], ans: 1 },
+                { q: "En las validaciones de la 'Prestación', ¿A qué se refiere el requisito de 'Determinabilidad'?", options: ["A que no contradiga las leyes de la física.", "A que no contradiga la moral (Licitud).", "A que debe estar cuantificado (Ej. '100 dólares' o 'valor oro en fecha X').", "A que debe tener peso extrapatrimonial."], ans: 2 },
+                { q: "Un terremoto destruye la casa que el deudor debía entregar. La obligación se extingue sin culpa por el mecanismo de:", options: ["Subrogación.", "Imposibilidad de Cumplimiento (Fuerza Mayor).", "Consignación (Depósito Judicial).", "Novación."], ans: 1 }
+            ],
+            dragDrop: [
+                { id: "dd1", term: "Pago", desc: "El cumplimiento exacto de la prestación. (El cierre estándar del socket legal)." },
+                { id: "dd2", term: "Compensación", desc: "Dos personas son deudoras y acreedoras recíprocas; se extingue el vínculo hasta el límite de la deuda menor." },
+                { id: "dd3", term: "Consignación", desc: "El acreedor rechaza el pago maliciosamente; el deudor deposita el pago en el juzgado para liberarse." },
+                { id: "dd4", term: "Subrogación", desc: "Un tercero ajeno (ej. un Garante) paga la obligación, reemplaza al acreedor original y asume el derecho de cobro." },
+                { id: "dd5", term: "Novación", desc: "Reemplazo de una obligación antigua por una nueva. La vieja se extingue sirviendo como base de la nueva." }
+            ],
+            fillBlanks: [
+                { text: "Una Obligación es un vínculo jurídico donde un nodo activo ([acreedor]) exige a un nodo pasivo ([deudor]) una [prestacion]." },
+                { text: "Las funciones de la Responsabilidad Civil son: Preventiva, [resarcitoria] (devolver al estado anterior) y [sancionatoria] (castigo ejemplar)." },
+                { text: "La Pérdida de [chance] indemniza la frustración de una [probabilidad] objetiva de éxito." },
+                { text: "Un [cuasidelito] genera una obligación debido a un daño causado involuntariamente por negligencia o [culpa]." }
+            ],
+            sorter: [
+                { id: "s1", text: "Cumplimiento Espontáneo (Ejecución Happy Path).", type: "normal" },
+                { id: "s2", text: "La obligación se vuelve imposible de cumplir y se transforma en una compensación económica.", type: "anormal" },
+                { id: "s3", text: "Ejecución Forzada (El juez ordena a la policía secuestrar el auto).", type: "normal" },
+                { id: "s4", text: "Destrucción irrecuperable de la base de datos (Pago subsidiario de Daños y Perjuicios).", type: "anormal" },
+                { id: "s5", text: "Se contrata a otro programador para terminar el código, cargando el costo al deudor original.", type: "normal" },
+                { id: "s6", text: "El deudor transfiere los fondos acordados antes de la fecha límite.", type: "normal" }
+            ]
+        };
+
+        /**
+         * ========================================================================
+         * SISTEMA DE CELEBRACIÓN (CONFETTI PROTOCOL)
+         * ========================================================================
+         */
+        function fireConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            let particles = [];
+            // Colores: Azul Interfaz, Esmeralda, Blanco, Ámbar
+            const colors = ['#3B82F6', '#10B981', '#F8FAFC', '#F59E0B']; 
+
+            for (let i = 0; i < 150; i++) {
+                particles.push({
+                    x: canvas.width / 2,
+                    y: canvas.height / 2 + 100,
+                    r: Math.random() * 6 + 2,
+                    dx: Math.random() * 10 - 5,
+                    dy: Math.random() * -10 - 5,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    tilt: Math.random() * 10
+                });
+            }
+
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                let activeParticles = 0;
+                particles.forEach(p => {
+                    p.dy += 0.2; // Gravedad
+                    p.x += p.dx;
+                    p.y += p.dy;
+                    p.tilt += 0.1;
+
+                    if (p.y < canvas.height) activeParticles++;
+
+                    ctx.beginPath();
+                    ctx.lineWidth = p.r;
+                    ctx.strokeStyle = p.color;
+                    ctx.moveTo(p.x + p.tilt, p.y);
+                    ctx.lineTo(p.x + p.tilt, p.y + p.tilt);
+                    ctx.stroke();
+                });
+
+                if (activeParticles > 0) requestAnimationFrame(draw);
+                else ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+            draw();
+        }
+
+        /**
+         * ========================================================================
+         * CONTROLADOR DE NAVEGACIÓN (SPA ROUTER)
+         * ========================================================================
+         */
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.module-section').forEach(s => s.classList.remove('active'));
+                
+                e.target.classList.add('active');
+                const targetId = e.target.getAttribute('data-target');
+                document.getElementById(targetId).classList.add('active');
+
+                if(targetId === 'module-quiz') {
+                    if(quizApp.currentIndex < quizApp.questions.length && !quizApp.isFinished) quizApp.startTimer();
+                } else {
+                    quizApp.pauseTimer();
+                }
+            });
+        });
+
+        /**
+         * ========================================================================
+         * MÓDULO 1: FLASHCARDS
+         * ========================================================================
+         */
+        class FlashcardManager {
+            constructor(data) {
+                this.deck = [...data];
+                this.scene = document.getElementById('flashcard-scene');
+                this.controls = document.getElementById('flashcard-controls');
+                this.init();
+            }
+            init() {
+                document.getElementById('btn-easy').onclick = () => this.handleAnswer(true);
+                document.getElementById('btn-hard').onclick = () => this.handleAnswer(false);
+                this.renderCard();
+            }
+            renderCard() {
+                this.scene.innerHTML = '';
+                this.controls.classList.remove('show');
+                
+                if (this.deck.length === 0) {
+                    this.scene.innerHTML = `<h2 class="completion-msg">¡Nodos Jurídicos Sincronizados! 📡</h2>`;
+                    this.controls.style.display = 'none';
+                    fireConfetti();
+                    return;
+                }
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="card-face card-front"><h2>${this.deck[0].front}</h2></div>
+                    <div class="card-face card-back"><p>${this.deck[0].back.replace(/\n/g, '<br>')}</p><span class="citation">Fuente: ${this.deck[0].cite}</span></div>
+                `;
+                
+                card.onclick = () => {
+                    card.classList.toggle('is-flipped');
+                    if (card.classList.contains('is-flipped')) {
+                        this.controls.classList.add('show');
+                    } else {
+                        this.controls.classList.remove('show');
+                    }
+                };
+                
+                this.scene.appendChild(card);
+            }
+            handleAnswer(isEasy) {
+                const card = this.deck.shift();
+                if (!isEasy) this.deck.push(card);
+                const cardDOM = document.querySelector('.card');
+                cardDOM.style.transform = isEasy ? 'translateX(150%) rotateY(180deg)' : 'translateX(-150%) rotateY(180deg)';
+                cardDOM.style.opacity = '0';
+                setTimeout(() => this.renderCard(), 300);
+            }
+        }
+
+        /**
+         * ========================================================================
+         * MÓDULO 2: QUIZ
+         * ========================================================================
+         */
+        class QuizManager {
+            constructor(data) {
+                this.questions = [...data].sort(() => Math.random() - 0.5);
+                this.currentIndex = 0; this.score = 0; this.timeLeft = 15; this.isFinished = false;
+                this.container = document.getElementById('quiz-content');
+                this.timerBar = document.getElementById('quiz-timer');
+            }
+            start() {
+                this.currentIndex = 0; this.score = 0; this.isFinished = false;
+                this.questions.sort(() => Math.random() - 0.5);
+                this.renderQuestion();
+            }
+            renderQuestion() {
+                if (this.currentIndex >= this.questions.length) return this.endQuiz();
+                this.pauseTimer(); this.timeLeft = 15; this.updateTimerBar();
+                const q = this.questions[this.currentIndex];
+                let html = `<div class="question-text">${q.q}</div><div class="options-grid">`;
+                q.options.forEach((opt, index) => html += `<button class="option-btn" data-index="${index}">${opt}</button>`);
+                html += `</div>`;
+                this.container.innerHTML = html;
+                document.querySelectorAll('.option-btn').forEach(btn => btn.onclick = (e) => this.checkAnswer(parseInt(e.target.getAttribute('data-index')), e.target));
+                if(document.getElementById('module-quiz').classList.contains('active')) this.startTimer();
+            }
+            startTimer() {
+                clearInterval(this.timerInterval);
+                this.timerInterval = setInterval(() => {
+                    this.timeLeft--; this.updateTimerBar();
+                    if (this.timeLeft <= 0) { this.pauseTimer(); this.checkAnswer(-1, null); }
+                }, 1000);
+            }
+            pauseTimer() { clearInterval(this.timerInterval); }
+            updateTimerBar() {
+                const percentage = (this.timeLeft / 15) * 100;
+                this.timerBar.style.width = `${percentage}%`;
+                this.timerBar.className = percentage < 30 ? 'timer-fill danger' : 'timer-fill';
+            }
+            checkAnswer(selectedIndex, btnElement) {
+                this.pauseTimer();
+                const q = this.questions[this.currentIndex];
+                const buttons = document.querySelectorAll('.option-btn');
+                buttons.forEach(b => b.style.pointerEvents = 'none');
+                if (selectedIndex === q.ans) { if(btnElement) btnElement.classList.add('correct'); this.score++; } 
+                else { if(btnElement) btnElement.classList.add('wrong'); buttons[q.ans].classList.add('correct'); }
+                setTimeout(() => { this.currentIndex++; this.renderQuestion(); }, 1800);
+            }
+            endQuiz() {
+                this.isFinished = true;
+                this.container.innerHTML = `<h2 class="completion-msg">Evaluación Finalizada</h2><p style="text-align:center; font-size: 1.5rem; margin-top:1rem;">Aciertos: ${this.score} / ${this.questions.length}</p><div style="text-align:center; margin-top:2rem;"><button class="nav-btn" onclick="quizApp.start()">Reiniciar Ejecución</button></div>`;
+                this.timerBar.style.width = '0%';
+                if (this.score === this.questions.length) fireConfetti();
+            }
+        }
+
+        /**
+         * ========================================================================
+         * MÓDULO 3: DRAG & DROP
+         * ========================================================================
+         */
+        class DragDropManager {
+            constructor(data) {
+                this.data = data;
+                this.termsCol = document.getElementById('dd-terms');
+                this.defsCol = document.getElementById('dd-defs');
+                this.matches = 0;
+            }
+            init() {
+                this.termsCol.innerHTML = ''; this.defsCol.innerHTML = ''; this.matches = 0;
+                const terms = [...this.data].sort(() => Math.random() - 0.5);
+                const defs = [...this.data].sort(() => Math.random() - 0.5);
+
+                terms.forEach(item => {
+                    const el = document.createElement('div'); el.className = 'draggable-term'; el.draggable = true; el.textContent = item.term; el.dataset.id = item.id;
+                    el.ondragstart = (e) => { e.dataTransfer.setData('text/plain', item.id); setTimeout(() => el.style.opacity = '0.4', 0); };
+                    el.ondragend = () => el.style.opacity = '1';
+                    this.termsCol.appendChild(el);
+                });
+
+                defs.forEach(item => {
+                    const zone = document.createElement('div'); zone.className = 'drop-zone'; zone.dataset.matchId = item.id;
+                    zone.innerHTML = `<p style="pointer-events:none; font-size:0.95rem; text-align:center;">${item.desc}</p>`;
+                    zone.ondragover = e => { e.preventDefault(); if(!zone.classList.contains('matched')) zone.classList.add('drag-over'); };
+                    zone.ondragleave = () => zone.classList.remove('drag-over');
+                    zone.ondrop = e => this.handleDrop(e, zone);
+                    this.defsCol.appendChild(zone);
+                });
+            }
+            handleDrop(e, zone) {
+                e.preventDefault(); zone.classList.remove('drag-over');
+                if (zone.classList.contains('matched')) return;
+                const draggedId = e.dataTransfer.getData('text/plain');
+                if (draggedId === zone.dataset.matchId) {
+                    const draggedEl = document.querySelector(`.draggable-term[data-id="${draggedId}"]`);
+                    zone.innerHTML = ''; zone.appendChild(draggedEl);
+                    draggedEl.draggable = false; draggedEl.style.margin = '0'; draggedEl.style.border = 'none';
+                    zone.classList.add('matched'); this.matches++;
+                    if (this.matches === this.data.length) { setTimeout(() => fireConfetti(), 300); }
+                } else {
+                    const origBorder = zone.style.borderColor;
+                    zone.style.borderColor = 'var(--accent-alert)'; setTimeout(() => zone.style.borderColor = origBorder, 500);
+                }
+            }
+        }
+
+        /**
+         * ========================================================================
+         * MÓDULO 4: COMPLETAR TEXTOS
+         * ========================================================================
+         */
+        class FillBlanksManager {
+            constructor(data) {
+                this.data = data;
+                this.container = document.getElementById('fill-content');
+                this.btnCheck = document.getElementById('btn-check-fill');
+                this.init();
+            }
+            init() {
+                this.container.innerHTML = '';
+                this.data.forEach((item, index) => {
+                    let htmlText = item.text.replace(/\[(.*?)\]/g, (match, p1) => {
+                        const cleanAnswer = p1.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+                        return `<input type="text" class="blank-input" data-answer="${cleanAnswer}" autocomplete="off">`;
+                    });
+                    this.container.innerHTML += `<p style="margin-bottom: 1.5rem;">${index + 1}. ${htmlText}</p>`;
+                });
+
+                this.btnCheck.onclick = () => this.checkAnswers();
+            }
+            checkAnswers() {
+                const inputs = this.container.querySelectorAll('.blank-input');
+                let allCorrect = true;
+                
+                inputs.forEach(input => {
+                    const answer = input.getAttribute('data-answer');
+                    const userVal = input.value.trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+                    
+                    if (userVal === answer) {
+                        input.classList.remove('wrong');
+                        input.classList.add('correct');
+                    } else {
+                        input.classList.remove('correct');
+                        input.classList.add('wrong');
+                        allCorrect = false;
+                        void input.offsetWidth; 
+                    }
+                });
+
+                if (allCorrect) {
+                    this.btnCheck.textContent = "¡Códgio Legal Validado!";
+                    this.btnCheck.style.backgroundColor = "var(--accent-success)";
+                    this.btnCheck.style.color = "#fff";
+                    fireConfetti();
+                }
+            }
+        }
+
+        /**
+         * ========================================================================
+         * MÓDULO 5: CLASIFICADOR (EFECTOS NORMALES VS ANORMALES)
+         * ========================================================================
+         */
+         class BinarySorterManager {
+            constructor(data) {
+                this.data = [...data].sort(() => Math.random() - 0.5);
+                this.pool = document.getElementById('sorter-pool');
+                this.init();
+            }
+            init() {
+                this.pool.innerHTML = '';
+                document.getElementById('bin-normal').innerHTML = '';
+                document.getElementById('bin-anormal').innerHTML = '';
+
+                this.data.forEach(item => {
+                    const el = document.createElement('div');
+                    el.className = 'sorter-item';
+                    el.draggable = true;
+                    el.textContent = item.text;
+                    el.dataset.type = item.type;
+                    
+                    el.ondragstart = (e) => { e.dataTransfer.setData('text/plain', item.type); e.dataTransfer.setData('text/id', item.id); el.id = item.id; setTimeout(() => el.style.opacity = '0.4', 0); };
+                    el.ondragend = () => el.style.opacity = '1';
+                    
+                    this.pool.appendChild(el);
+                });
+
+                document.querySelectorAll('.bin').forEach(bin => {
+                    bin.ondragover = e => { e.preventDefault(); bin.style.backgroundColor = 'rgba(255,255,255,0.05)'; };
+                    bin.ondragleave = () => bin.style.backgroundColor = 'var(--bg-secondary)';
+                    bin.ondrop = e => this.handleDrop(e, bin);
+                });
+            }
+
+            handleDrop(e, bin) {
+                e.preventDefault();
+                bin.style.backgroundColor = 'var(--bg-secondary)';
+                
+                const expectedType = bin.getAttribute('data-bin');
+                const draggedType = e.dataTransfer.getData('text/plain');
+                const draggedId = e.dataTransfer.getData('text/id');
+
+                if (draggedType === expectedType) {
+                    const draggedEl = document.getElementById(draggedId);
+                    draggedEl.style.margin = '0';
+                    draggedEl.style.backgroundColor = 'var(--bg-primary)';
+                    draggedEl.style.border = `1px solid ${expectedType === 'normal' ? 'var(--accent-success)' : 'var(--accent-alert)'}`;
+                    draggedEl.draggable = false;
+                    
+                    bin.querySelector('.bin-items').appendChild(draggedEl);
+                    
+                    if (this.pool.children.length === 0) fireConfetti();
+                } else {
+                    const el = document.getElementById(draggedId);
+                    el.style.backgroundColor = 'var(--accent-warning)';
+                    setTimeout(() => el.style.backgroundColor = 'var(--bg-tertiary)', 400);
+                }
+            }
+        }
+
+        // =========================================
+        // INICIALIZACIÓN
+        // =========================================
+        const flashcardApp = new FlashcardManager(StudyData.flashcards);
+        const quizApp = new QuizManager(StudyData.quiz);
+        const ddApp = new DragDropManager(StudyData.dragDrop);
+        const fillApp = new FillBlanksManager(StudyData.fillBlanks);
+        const sorterApp = new BinarySorterManager(StudyData.sorter);
+        
+        quizApp.start();
+        ddApp.init();
+
+    </script>
+</body>
+</html>
