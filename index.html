@@ -190,6 +190,26 @@
         
         /* CONFETTI CANVAS */
         #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100; }
+
+        /* =========================================
+           RESPONSIVE DESIGN
+           ========================================= */
+        @media (max-width: 768px) {
+            header h1 { font-size: 1.4rem; }
+            .nav-btn { padding: 0.5rem 0.8rem; font-size: 0.8rem; }
+            main { padding: 1rem; }
+            .scene { height: 300px; }
+            .card-face { padding: 1.5rem; }
+            .card-front h2 { font-size: 1.2rem; }
+            .card-back p { font-size: 1rem; }
+            .dd-container { grid-template-columns: 1fr; gap: 1rem; }
+            .terms-col, .defs-col { padding: 1rem; }
+            .sorter-bins { grid-template-columns: 1fr; gap: 1rem; }
+            .bin { min-height: 200px; padding: 1rem; }
+            .fill-container { padding: 1.5rem; font-size: 1.1rem; line-height: 1.8; }
+            .blank-input { width: 120px; font-size: 1rem; }
+            .btn-action { padding: 0.6rem 1.5rem; font-size: 0.9rem; }
+        }
     </style>
 </head>
 <body>
